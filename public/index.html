@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apache VHost Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 Apache VHost Manager</h1>
+            <p>Beheer je Apache virtual hosts eenvoudig</p>
+        </header>
+
+        <div class="actions">
+            <button id="addSiteBtn" class="btn btn-primary">➕ Nieuwe Site</button>
+            <button id="reloadApacheBtn" class="btn btn-secondary">🔄 Reload Apache</button>
+            <button id="testConfigBtn" class="btn btn-secondary">🧪 Test Configuratie</button>
+        </div>
+
+        <div id="sitesList" class="sites-list">
+            <p class="loading">Laden...</p>
+        </div>
+    </div>
+
+    <!-- Modal voor site toevoegen/bewerken -->
+    <div id="siteModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">Nieuwe Site</h2>
+            <form id="siteForm">
+                <div class="form-group">
+                    <label for="domain">Domain *</label>
+                    <input type="text" id="domain" name="domain" placeholder="example.com" required>
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input type="checkbox" id="isProxy" name="isProxy">
+                        Backend/Proxy Server (Flask, Node.js, etc.)
+                    </label>
+                </div>
+
+                <div id="proxyFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="proxyTarget">Backend URL *</label>
+                        <input type="text" id="proxyTarget" name="proxyTarget" placeholder="http://localhost:5000">
+                        <small>Bijvoorbeeld: http://localhost:5000 voor Flask, http://localhost:3001 voor Node.js</small>
+                    </div>
+                </div>
+
+                <div id="staticFields">
+                    <div class="form-group">
+                        <label for="documentRoot">Document Root *</label>
+                        <input type="text" id="documentRoot" name="documentRoot" placeholder="/var/www/html/example">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="port">Port</label>
+                    <input type="number" id="port" name="port" value="80" min="1" max="65535">
+                </div>
+
+                <div class="form-group">
+                    <label for="serverAlias">Server Alias (optioneel)</label>
+                    <input type="text" id="serverAlias" name="serverAlias" placeholder="www.example.com">
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input type="checkbox" id="enableSSL" name="enableSSL">
+                        SSL inschakelen (HTTPS)
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Opslaan</button>
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Annuleren</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
