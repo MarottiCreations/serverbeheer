@@ -3,3 +3,6 @@ sites/*.json
 .DS_Store
 npm-debug.log
 .env
+
+# Build artifacts
+dist/
