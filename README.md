@@ -47,6 +47,22 @@ Een moderne web-interface voor het beheren van Apache virtual hosts op macOS.
    http://localhost:3000
    ```
 
+### Desktop App (zonder terminal)
+
+Je kunt Serverbeheer als een gewone app openen via Electron:
+
+1. Installeer dependencies voor de app:
+   ```bash
+   npm install
+   ```
+
+2. Start de desktop app:
+   ```bash
+   npm run app
+   ```
+
+Dit opent een eigen venster met de interface en start de server automatisch op de achtergrond.
+
 3. **Voeg een nieuwe site toe:**
    
    **Voor static websites (HTML/CSS/JS):**

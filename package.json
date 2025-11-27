@@ -2,10 +2,13 @@
   "name": "apache-vhost-manager",
   "version": "1.0.0",
   "description": "Web interface voor Apache virtual host beheer",
-  "main": "server.js",
+  "main": "electron.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "app": "electron .",
+    "app-dev": "NODE_ENV=development electron .",
+    "build": "electron-builder"
   },
   "keywords": ["apache", "vhost", "management"],
   "author": "",
@@ -15,6 +18,31 @@
     "body-parser": "^1.20.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "electron": "^33.2.0",
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.serverbeheer.app",
+    "productName": "Serverbeheer",
+    "files": [
+      "**/*",
+      "!node_modules/.cache/**",
+      "!dist/**"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
+        }
+      ]
+    },
+    "asarUnpack": [
+      "server.js",
+      "public/**",
+      "sites/**"
+    ]
   }
 }

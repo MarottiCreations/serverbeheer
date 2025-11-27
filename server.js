@@ -4,6 +4,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { exec } = require('child_process');
 const util = require('util');
+const net = require('net');
 
 const execPromise = util.promisify(exec);
 const app = express();
@@ -346,6 +347,77 @@ app.post('/api/apache/reload', async (req, res) => {
       success: false, 
       error: error.message 
     });
+  }
+});
+
+// Check of een port actief is
+function checkPort(port) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    const timeout = 200;
+    
+    socket.setTimeout(timeout);
+    
+    socket.on('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    
+    socket.on('timeout', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    
+    socket.on('error', () => {
+      resolve(false);
+    });
+    
+    socket.connect(port, '127.0.0.1');
+  });
+}
+
+// Scan veel gebruikte development ports
+async function scanActivePorts() {
+  const commonPorts = [
+    { port: 3000, name: 'Node.js/React Dev' },
+    { port: 3001, name: 'Node.js Alt' },
+    { port: 4200, name: 'Angular' },
+    { port: 5000, name: 'Flask' },
+    { port: 5001, name: 'Flask Alt' },
+    { port: 5173, name: 'Vite' },
+    { port: 8000, name: 'Django/Python' },
+    { port: 8080, name: 'HTTP Alt' },
+    { port: 8888, name: 'Jupyter' },
+    { port: 9000, name: 'PHP/Alt' },
+    { port: 3306, name: 'MySQL' },
+    { port: 5432, name: 'PostgreSQL' },
+    { port: 27017, name: 'MongoDB' },
+    { port: 6379, name: 'Redis' }
+  ];
+
+  const activeServices = [];
+  
+  for (const service of commonPorts) {
+    const isActive = await checkPort(service.port);
+    if (isActive) {
+      activeServices.push({
+        port: service.port,
+        name: service.name,
+        url: `http://localhost:${service.port}`
+      });
+    }
+  }
+  
+  return activeServices;
+}
+
+// API endpoint voor actieve services
+app.get('/api/services/active', async (req, res) => {
+  try {
+    const activeServices = await scanActivePorts();
+    res.json(activeServices);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

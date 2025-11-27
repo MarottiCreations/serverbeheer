@@ -3,6 +3,8 @@ const sitesList = document.getElementById('sitesList');
 const addSiteBtn = document.getElementById('addSiteBtn');
 const reloadApacheBtn = document.getElementById('reloadApacheBtn');
 const testConfigBtn = document.getElementById('testConfigBtn');
+const refreshServicesBtn = document.getElementById('refreshServicesBtn');
+const servicesList = document.getElementById('servicesList');
 const siteModal = document.getElementById('siteModal');
 const siteForm = document.getElementById('siteForm');
 const modalTitle = document.getElementById('modalTitle');
@@ -10,10 +12,12 @@ const closeModal = document.querySelector('.close');
 const cancelBtn = document.getElementById('cancelBtn');
 
 let editingDomain = null;
+let activeServices = [];
 
 // Initialisatie
 document.addEventListener('DOMContentLoaded', () => {
     loadSites();
+    loadActiveServices();
     setupEventListeners();
 });
 
@@ -22,6 +26,7 @@ function setupEventListeners() {
     addSiteBtn.addEventListener('click', () => openModal());
     reloadApacheBtn.addEventListener('click', reloadApache);
     testConfigBtn.addEventListener('click', testConfig);
+    refreshServicesBtn.addEventListener('click', loadActiveServices);
     closeModal.addEventListener('click', closeModalHandler);
     cancelBtn.addEventListener('click', closeModalHandler);
     siteForm.addEventListener('submit', handleSubmit);
@@ -291,6 +296,64 @@ async function testConfig() {
     } catch (error) {
         showNotification('Fout bij testen: ' + error.message, 'error');
     }
+}
+
+// Laad actieve services
+async function loadActiveServices() {
+    try {
+        servicesList.innerHTML = '<p class="loading">Scannen...</p>';
+        
+        const response = await fetch('/api/services/active');
+        activeServices = await response.json();
+
+        if (activeServices.length === 0) {
+            servicesList.innerHTML = `
+                <div class="no-services">
+                    <p>Geen actieve development servers gevonden</p>
+                    <p style="font-size: 0.9em; margin-top: 8px;">Start je Flask, Node.js of andere backend en klik op "🔍 Scan Services"</p>
+                </div>
+            `;
+            return;
+        }
+
+        servicesList.innerHTML = activeServices.map(service => `
+            <div class="service-item clickable" data-port="${service.port}" data-url="${service.url}">
+                <h4>
+                    🟢 ${service.name}
+                    <span class="port-badge">:${service.port}</span>
+                </h4>
+                <p><code>${service.url}</code></p>
+                <p style="margin-top: 8px; font-size: 0.85em; color: #667eea;">Klik om proxy te configureren →</p>
+            </div>
+        `).join('');
+        
+        // Voeg click handlers toe
+        document.querySelectorAll('.service-item.clickable').forEach(item => {
+            item.addEventListener('click', () => {
+                const url = item.dataset.url;
+                const port = item.dataset.port;
+                openModalWithService(url);
+            });
+        });
+    } catch (error) {
+        servicesList.innerHTML = '<p class="no-services">Fout bij scannen van services</p>';
+        console.error('Error loading services:', error);
+    }
+}
+
+// Open modal met vooringevulde service data
+function openModalWithService(proxyUrl) {
+    openModal();
+    
+    // Vink proxy aan en vul URL in
+    document.getElementById('isProxy').checked = true;
+    document.getElementById('proxyTarget').value = proxyUrl;
+    toggleProxyFields(true);
+    
+    // Focus op domain veld
+    document.getElementById('domain').focus();
+    
+    showNotification('Service URL vooringevuld! Vul nu je domain in.', 'success');
 }
 
 // Toon notificatie
