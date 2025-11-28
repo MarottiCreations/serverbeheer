@@ -8,6 +8,9 @@ app.disableHardwareAcceleration();
 app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-gpu-compositing');
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
+app.commandLine.appendSwitch('no-sandbox');
+// Mitigate V8 JIT-related crashes by disabling JIT
+app.commandLine.appendSwitch('js-flags', '--jitless');
 
 let mainWindow = null;
 let serverProcess = null;
@@ -101,7 +104,7 @@ function createWindow() {
     height: 800,
     title: 'Serverbeheer',
     backgroundColor: '#ffffff',
-    show: true,
+    show: false,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false
@@ -118,20 +121,21 @@ function createWindow() {
     mainWindow.show();
   });
 
-  mainWindow.loadURL(SERVER_URL).catch(() => {
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Serverbeheer</title><style>body{font-family:-apple-system,system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f7f7f7;color:#333} .card{background:#fff;padding:24px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,0.1);max-width:640px} h1{margin:0 0 12px} code{background:#eee;padding:2px 6px;border-radius:6px}</style></head><body><div class="card"><h1>Kan de server niet bereiken</h1><p>De backend op <code>${SERVER_URL}</code> lijkt niet te draaien.</p><ol><li>Wacht enkele seconden; de backend wordt opgestart.</li><li>Of start handmatig in terminal:<br><code>cd ${__dirname}<br/>node server.js</code></li></ol><p>Als het probleem blijft, stuur de foutmelding door.</p></div></body></html>`;
-    mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  // Load a lightweight local splash to avoid heavy V8 work during startup
+  mainWindow.loadFile(path.join(__dirname, 'public', 'splash.html')).catch(() => {
+    // ignore
   });
 
-  // Keep polling in background until backend comes up, then reload
+  // Keep polling in background until backend comes up, then navigate
   (async () => {
     try {
       await waitForServer(300, 300);
       if (mainWindow) {
-        mainWindow.loadURL(SERVER_URL);
+        await mainWindow.loadURL(SERVER_URL);
+        if (!mainWindow.isVisible()) mainWindow.show();
       }
     } catch (err) {
-      // give up quietly
+      // stay on splash quietly
     }
   })();
 
