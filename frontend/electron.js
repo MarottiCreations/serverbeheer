@@ -55,9 +55,9 @@ async function ensureServerRunning() {
 
   let serverScriptPath;
   if (app.isPackaged) {
-    serverScriptPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'server.js');
+    serverScriptPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'backend', 'server.js');
   } else {
-    serverScriptPath = path.join(__dirname, 'server.js');
+    serverScriptPath = path.join(__dirname, '..', 'backend', 'server.js');
   }
 
   if (serverProcess && !serverProcess.killed) {
@@ -79,8 +79,11 @@ async function ensureServerRunning() {
   }
 
   console.log(`[electron] spawning backend: ${nodeBinary} ${serverScriptPath}`);
+  const cwd = app.isPackaged 
+    ? process.resourcesPath 
+    : path.join(__dirname, '..', 'backend');
   serverProcess = spawn(nodeBinary, [serverScriptPath], {
-    cwd: app.isPackaged ? process.resourcesPath : __dirname,
+    cwd,
     env: childEnv,
     stdio: 'inherit'
   });

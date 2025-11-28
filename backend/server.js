@@ -17,7 +17,7 @@ const APACHE_ENABLED_DIR = '/etc/apache2/sites-enabled';
 
 // Middleware
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'public')));
 
 // Zorg dat de config directory bestaat
 async function ensureConfigDir() {
@@ -379,35 +379,34 @@ function checkPort(port) {
 // Scan veel gebruikte development ports
 async function scanActivePorts() {
   const commonPorts = [
-    { port: 3000, name: 'Node.js/React Dev' },
-    { port: 3001, name: 'Node.js Alt' },
-    { port: 4200, name: 'Angular' },
-    { port: 5000, name: 'Flask' },
-    { port: 5001, name: 'Flask Alt' },
-    { port: 5173, name: 'Vite' },
-    { port: 8000, name: 'Django/Python' },
-    { port: 8080, name: 'HTTP Alt' },
-    { port: 8888, name: 'Jupyter' },
-    { port: 9000, name: 'PHP/Alt' },
-    { port: 3306, name: 'MySQL' },
-    { port: 5432, name: 'PostgreSQL' },
-    { port: 27017, name: 'MongoDB' },
-    { port: 6379, name: 'Redis' }
+    { port: 3000, name: 'Node.js/React Dev', purpose: 'Frontend/backend development server (standaard voor React, Express, Electron backend)' },
+    { port: 3001, name: 'Node.js Alt', purpose: 'Alternatieve Node.js/Express backend of proxy' },
+    { port: 4200, name: 'Angular', purpose: 'Angular development server' },
+    { port: 5000, name: 'Flask', purpose: 'Python Flask API/backend (vaak gebruikt voor ML of REST)' },
+    { port: 5001, name: 'Flask Alt', purpose: 'Alternatieve Flask backend' },
+    { port: 5173, name: 'Vite', purpose: 'Vite frontend development server (moderne JS frameworks)' },
+    { port: 8000, name: 'Django/Python', purpose: 'Django development server of andere Python webapp' },
+    { port: 8080, name: 'HTTP Alt', purpose: 'Algemene HTTP development server (diverse frameworks)' },
+    { port: 8888, name: 'Jupyter', purpose: 'Jupyter Notebook/Lab (data science, ML, Python)' },
+    { port: 9000, name: 'PHP/Alt', purpose: 'PHP development server of alternatieve backend' },
+    { port: 3306, name: 'MySQL', purpose: 'MySQL database server' },
+    { port: 5432, name: 'PostgreSQL', purpose: 'PostgreSQL database server' },
+    { port: 27017, name: 'MongoDB', purpose: 'MongoDB NoSQL database' },
+    { port: 6379, name: 'Redis', purpose: 'Redis in-memory key-value store (cache, queue)' }
   ];
 
   const activeServices = [];
-  
   for (const service of commonPorts) {
     const isActive = await checkPort(service.port);
     if (isActive) {
       activeServices.push({
         port: service.port,
         name: service.name,
-        url: `http://localhost:${service.port}`
+        url: `http://localhost:${service.port}`,
+        purpose: service.purpose
       });
     }
   }
-  
   return activeServices;
 }
 

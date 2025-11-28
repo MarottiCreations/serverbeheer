@@ -2,10 +2,10 @@
   "name": "apache-vhost-manager",
   "version": "1.0.0",
   "description": "Web interface voor Apache virtual host beheer",
-  "main": "electron.js",
+  "main": "frontend/electron.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
     "app": "electron .",
     "app-dev": "NODE_ENV=development electron .",
     "build": "electron-builder"
@@ -40,9 +40,8 @@
       ]
     },
     "asarUnpack": [
-      "server.js",
-      "public/**",
-      "sites/**"
+      "backend/**",
+      "frontend/public/**"
     ]
   }
 }
