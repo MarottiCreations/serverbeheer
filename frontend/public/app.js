@@ -5,6 +5,7 @@ const reloadApacheBtn = document.getElementById('reloadApacheBtn');
 const testConfigBtn = document.getElementById('testConfigBtn');
 const refreshServicesBtn = document.getElementById('refreshServicesBtn');
 const servicesList = document.getElementById('servicesList');
+const inactiveServicesList = document.getElementById('inactiveServicesList');
 const siteModal = document.getElementById('siteModal');
 const siteForm = document.getElementById('siteForm');
 const modalTitle = document.getElementById('modalTitle');
@@ -13,6 +14,7 @@ const cancelBtn = document.getElementById('cancelBtn');
 
 let editingDomain = null;
 let activeServices = [];
+let inactiveServices = [];
 
 // Initialisatie
 document.addEventListener('DOMContentLoaded', () => {
@@ -316,16 +318,7 @@ async function loadActiveServices() {
             return;
         }
 
-        servicesList.innerHTML = activeServices.map(service => `
-            <div class="service-item clickable" data-port="${service.port}" data-url="${service.url}">
-                <h4>
-                    🟢 ${service.name}
-                    <span class="port-badge">:${service.port}</span>
-                </h4>
-                <p><code>${service.url}</code></p>
-                <p style="margin-top: 8px; font-size: 0.85em; color: #667eea;">Klik om proxy te configureren →</p>
-            </div>
-        `).join('');
+        servicesList.innerHTML = activeServices.map(service => renderActiveServiceItem(service)).join('');
         
         // Voeg click handlers toe
         document.querySelectorAll('.service-item.clickable').forEach(item => {
@@ -335,9 +328,13 @@ async function loadActiveServices() {
                 openModalWithService(url);
             });
         });
+
+        attachActiveToggles();
+        renderInactiveServices();
     } catch (error) {
         servicesList.innerHTML = '<p class="no-services">Fout bij scannen van services</p>';
         console.error('Error loading services:', error);
+        renderInactiveServices();
     }
 }
 
@@ -368,4 +365,93 @@ function showNotification(message, type = 'success') {
         notification.style.animation = 'slideInRight 0.3s ease reverse';
         setTimeout(() => notification.remove(), 300);
     }, 5000);
+}
+
+function renderActiveServiceItem(service) {
+    return `
+    <div class="service-item" data-port="${service.port}" data-url="${service.url}" data-name="${service.name}">
+        <h4>
+            🟢 ${service.name}
+            <span class="port-badge">:${service.port}</span>
+        </h4>
+        <p><code>${service.url}</code></p>
+        <div class="toggle-row">
+            <label class="switch">
+                <input type="checkbox" class="svc-toggle" data-name="${service.name}" data-port="${service.port}" data-url="${service.url}" checked>
+                <span class="slider"></span>
+            </label>
+            <span class="svc-status">actief</span>
+        </div>
+        <p style="margin-top: 8px; font-size: 0.85em; color: #667eea;">Klik om proxy te configureren →</p>
+    </div>`;
+}
+
+function attachActiveToggles() {
+    document.querySelectorAll('#servicesList .svc-toggle').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            const name = e.target.dataset.name;
+            const port = parseInt(e.target.dataset.port, 10);
+            const url = e.target.dataset.url;
+            const svc = { name, port, url };
+            if (!enabled) {
+                // Move to inactive
+                inactiveServices.push(svc);
+                activeServices = activeServices.filter(s => !(s.name === name && s.port === port));
+                showNotification(`${name} uitgeschakeld`, 'warning');
+            }
+            renderListsAfterToggle();
+        });
+    });
+}
+
+function attachInactiveToggles() {
+    document.querySelectorAll('#inactiveServicesList .svc-toggle').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            const name = e.target.dataset.name;
+            const port = parseInt(e.target.dataset.port || '0', 10);
+            const url = e.target.dataset.url || '';
+            const svc = { name, port, url };
+            if (enabled) {
+                // Move back to active
+                activeServices.push(svc);
+                inactiveServices = inactiveServices.filter(s => s.name !== name);
+                showNotification(`${name} ingeschakeld`, 'success');
+            }
+            renderListsAfterToggle();
+        });
+    });
+}
+
+function renderInactiveServices() {
+    if (!inactiveServicesList) return;
+    if (!inactiveServices.length) {
+        inactiveServicesList.innerHTML = '<p class="no-services">Geen inactieve services</p>';
+        return;
+    }
+    inactiveServicesList.innerHTML = inactiveServices.map(svc => renderInactiveServiceItem(svc)).join('');
+    attachInactiveToggles();
+}
+
+function renderInactiveServiceItem(svc) {
+    return `
+    <div class="service-item" data-name="${svc.name}">
+        <h4>⚪️ ${svc.name}</h4>
+        ${svc.port ? `<p><code>${svc.url}</code></p>` : ''}
+        <div class="toggle-row">
+            <label class="switch">
+                <input type="checkbox" class="svc-toggle" data-name="${svc.name}" data-port="${svc.port || ''}" data-url="${svc.url || ''}">
+                <span class="slider"></span>
+            </label>
+            <span class="svc-status">inactief</span>
+        </div>
+    </div>`;
+}
+
+function renderListsAfterToggle() {
+    // Re-render both lists from current arrays
+    servicesList.innerHTML = activeServices.map(service => renderActiveServiceItem(service)).join('');
+    attachActiveToggles();
+    renderInactiveServices();
 }
